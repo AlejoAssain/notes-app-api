@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  apicontainer:
+    image: notes-app-api:1
+    ports:
+      - "4000:4000"
+    environment:
+
+
