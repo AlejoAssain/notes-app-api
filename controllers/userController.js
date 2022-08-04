@@ -4,9 +4,8 @@ import { User } from "../models/user.model.js";
 
 
 const filterUserData = user => {
-  const { _id: uId, mail: uMail, username:uUsername, name: uName } = user;
+  const { mail: uMail, username:uUsername, name: uName } = user;
   return {
-    _id: uId,
     mail: uMail,
     username: uUsername,
     name: uName
@@ -109,7 +108,8 @@ export const loginUser = async (req, res) => {
     if (compareResult) {
       const filteredUserData = filterUserData(user);
 
-      filteredUserData.token = generateToken(user._id);
+      const token = generateToken(user._id);
+      filteredUserData.token = token;
 
       res.json(filteredUserData);
 
@@ -117,10 +117,12 @@ export const loginUser = async (req, res) => {
 
     } else {
       res.status(400).json("Wrong password");
+      console.log("Wrong password")
     };
 
   } else {
     res.status(400).json("Username doesn't exists");
+    console.log("Wrong username")
   };
 };
 
