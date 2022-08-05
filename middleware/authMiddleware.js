@@ -2,9 +2,29 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 
 
-export const protectionMiddleware = async (req, res, next) => {
+const getCurrentDateTime = () => new Date();
+
+const showRequestData = (req) => {
+  const method = req.method;
   const ipAddress = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-  console.log(ipAddress);
+  const path = req.route.path;
+  const origin = req.headers.origin;
+  const from = req.headers.referer;
+  const currentDateTime = getCurrentDateTime();
+
+  console.log('\n\x1b[36m%s\x1b[0m', "    NEW REQUEST!", `
+    Request from origin ${origin}
+    Method: ${method}
+    Ip: ${ipAddress}
+    To path: ${path}
+    From path: ${from}
+    DateTime: ${currentDateTime}
+    \n
+  `);
+};
+
+export const protectionMiddleware = async (req, res, next) => {
+  showRequestData(req);
 
   let token;
 

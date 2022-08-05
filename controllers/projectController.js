@@ -11,9 +11,6 @@ export const getMyProjects = async (req, res) => {
 
   const participantProjects = await Project.find( { participants_id: req.user._id } );
 
-  console.log("ownedProjects: ", ownedProjects);
-  console.log("participantProjects", participantProjects);
-
   res.json({
     ownerRole: ownedProjects,
     participantRole: participantProjects

@@ -98,6 +98,8 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   const { username: uName, password: uPassword } = req.body;
 
+  const errorStatusCode = 401;
+
   const user = await User.findOne( { username: uName } );
 
   if (user) {
@@ -116,13 +118,13 @@ export const loginUser = async (req, res) => {
       console.log("\nLogged as " + user.username)
 
     } else {
-      res.status(400).json("Wrong password");
+      res.status(errorStatusCode).json("Wrong password");
       console.log("Wrong password")
     };
 
   } else {
-    res.status(400).json("Username doesn't exists");
-    console.log("Wrong username")
+    res.status(errorStatusCode).json("Username doesn't exists");
+    console.log("Wrong username");
   };
 };
 
