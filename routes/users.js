@@ -2,7 +2,7 @@ import express from "express";
 import {
   getAllUsers,
   getMe,
-  getUserByUsername,
+  getUser,
   registerUser,
   loginUser,
   updateUser,
@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.get("/", protectionMiddleware, adminOnly, getAllUsers);
 router.get("/me", protectionMiddleware, getMe);
-router.get("/:username", protectionMiddleware, adminOnly, getUserByUsername);
+router.get("/:username", protectionMiddleware, adminOnly, getUser);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.patch("/update", protectionMiddleware, updateUser);

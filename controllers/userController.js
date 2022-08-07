@@ -20,9 +20,14 @@ const generateToken = id => jwt.sign(
   }
 );
 
-export const getUser = async (uName) => {
+export const getIdByUsername = async (uName) => {
   const user = await User.findOne( { username: uName } );
-  return user;
+  return user._id;
+};
+
+export const getUsernameById = async (uId) => {
+  const user = await User.findById(uId);
+  return user.username;
 };
 
 export const getMe = async (req, res) => {
@@ -48,7 +53,7 @@ export const getAllUsers = async (req, res) => {
   };
 };
 
-export const getUserByUsername = async (req, res) => {
+export const getUser = async (req, res) => {
   try {
     const user = await User.findOne( { username: req.params.username } );
     console.log("Sending:\n", user);

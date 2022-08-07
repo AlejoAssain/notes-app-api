@@ -1,5 +1,28 @@
 import { Project } from "../models/project.model.js";
-import { User } from "../models/user.model.js";
+import { getUsernameById } from "./userController.js"
+
+
+const filterProjectsData = async (project, ownerUname) => {
+  const {
+    name,
+    description,
+    owner_id: pOwnerId,
+    createdAt,
+    updatedAt
+  } = project;
+
+  const ownerUsername = ownerUname ? ownerUname : await getUsernameById(pOwnerId);
+
+  const filteredData = {
+    name: name,
+    description: description,
+    ownerUsername: ownerUsername,
+    creationDate: createdAt,
+    updateDate: updatedAt
+  }
+
+  return filteredData;
+};
 
 export const getProject = async (projectName, userId) => {
   const project = await Project.findOne( { name: projectName, owner_id: userId} );
@@ -8,12 +31,19 @@ export const getProject = async (projectName, userId) => {
 
 export const getMyProjects = async (req, res) => {
   const ownedProjects = await Project.find( { owner_id: req.user._id } );
-
   const participantProjects = await Project.find( { participants_id: req.user._id } );
 
+  const ownedProjectsFiltered = await Promise.all(ownedProjects.map(
+    async (project) => await filterProjectsData(project, req.user.username)
+  ));
+
+  const participantProjectsFiltered = await Promise.all(participantProjects.map(
+    async (project) => await filterProjectsData(project)
+  ));
+
   res.json({
-    ownerRole: ownedProjects,
-    participantRole: participantProjects
+    ownerRole: ownedProjectsFiltered,
+    participantRole: participantProjectsFiltered
   });
 };
 
