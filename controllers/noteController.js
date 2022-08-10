@@ -71,27 +71,33 @@ export const createNote = async (req, res) => {
   try {
     const { _id: projectId } = await getProject(projectName, req.user._id);
 
-    const newNote = new Note({
-      name: generateNoteName(noteTitle),
-      title: noteTitle,
-      content: noteContent,
-      priority: Number(notePriority),
-      project_id: projectId,
-      completed: false,
-      assigned_user_id: null
-    });
+    const newNoteName = generateNoteName(noteTitle);
 
-    await newNote.save();
+    if (await Note.findOne({ project_id: projectId, name: newNoteName})) {
+      throw new Error("Note already exists")
+    } else {
+      const newNote = new Note({
+        name: newNoteName,
+        title: noteTitle,
+        content: noteContent,
+        priority: Number(notePriority),
+        project_id: projectId,
+        completed: false,
+        assigned_user_id: null
+      });
 
-    console.log("Note created");
+      await newNote.save();
 
-    res.json(await filterNoteData(newNote));
+      console.log("Note created");
 
+      res.json(await filterNoteData(newNote));
+
+    };
   } catch (e) {
     const errorMessage = "Error: " + e;
 
     console.log(errorMessage);
-    res.json(errorMessage);
+    res.status(400).json(errorMessage);
   };
 };
 
@@ -124,7 +130,7 @@ export const assignUser = async (req, res) => {
     const errorMessage = "Error: " + e;
 
     console.log(errorMessage);
-    res.json(errorMessage);
+    res.status(400).json(errorMessage);
   };
 };
 
@@ -177,7 +183,7 @@ export const toggleNoteState = async (req, res) => {
 
     await note.save();
 
-    res.json(note);
+    res.json(await filterNoteData(note));
 
   } catch (e) {
     const errorMessage = "Error: " + e;
@@ -191,7 +197,7 @@ export const deleteNote = async (req, res) => {
   const {
     projectName,
     noteName
-  } = req.body;
+  } = req.params;
 
   try {
     const { _id: projectId } = await getProject(projectName, req.user._id);
@@ -201,7 +207,7 @@ export const deleteNote = async (req, res) => {
       name: noteName
     });
 
-    res.json(deletedNote);
+    res.json(filterNoteData(deletedNote));
 
   } catch (e) {
     const errorMessage = "Error: " + e;

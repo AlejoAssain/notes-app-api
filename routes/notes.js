@@ -18,7 +18,7 @@ router.post("/create", protectionMiddleware, createNote);
 router.patch("/assign", protectionMiddleware, assignUser);
 router.patch("/update", protectionMiddleware, updateNote);
 router.patch("/togglestate", protectionMiddleware, toggleNoteState);
-router.delete("/delete", protectionMiddleware, deleteNote);
+router.delete("/delete/:projectName/:noteName", protectionMiddleware, deleteNote);
 
 
 export const notesRouter = router;
