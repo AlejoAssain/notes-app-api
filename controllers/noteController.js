@@ -158,7 +158,7 @@ export const updateNote = async (req, res) => {
 
     await note.save();
 
-    res.json(note);
+    res.json(await filterNoteData(note));
 
   } catch (e) {
     const errorMessage = "Error: " + e;
