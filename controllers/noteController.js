@@ -1,7 +1,34 @@
 import { Note } from "../models/note.model.js";
 import { getProject } from "./projectController.js";
-import { getUser } from "./userController.js";
+import { getUser, getUsernameById } from "./userController.js";
 
+
+const filterNoteData = async (note) => {
+  const {
+    name,
+    title,
+    content,
+    priority,
+    completed,
+    assigned_user_id: assignedUserId
+  } = note;
+
+  let assignedUname = null;
+
+  if (assignedUserId) {
+    assignedUsername = await getUsernameById(assignedUserId);
+  };
+
+  return {
+    name: name,
+    title: title,
+    content: content,
+    priority: priority,
+    completed: completed,
+    assignedUsername: assignedUname
+  };
+
+};
 
 const deleteSpaces = word => word.split(" ").join("");
 
@@ -17,10 +44,13 @@ export const getNotesOfProject = async (req, res) => {
 
   try {
     const { _id: projectId } = await getProject(projectName, req.user._id);
-
     const notes = await Note.find( { project_id: projectId });
 
-    res.json(notes);
+    const filteredNotes = await Promise.all(notes.map(
+      async (note) => await filterNoteData(note)
+    ));
+
+    res.json(filteredNotes);
 
   } catch (e) {
     const errorMessage = "Error: " + e;
@@ -55,7 +85,7 @@ export const createNote = async (req, res) => {
 
     console.log("Note created");
 
-    res.json(newNote);
+    res.json(await filterNoteData(newNote));
 
   } catch (e) {
     const errorMessage = "Error: " + e;
