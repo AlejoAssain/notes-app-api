@@ -15,6 +15,6 @@ router.get("/myprojects", protectionMiddleware, getMyProjects);
 router.post("/create", protectionMiddleware, createProject);
 router.patch("/addparticipant", protectionMiddleware, addParticipant);
 router.patch("/update", protectionMiddleware, updateProjectData);
-router.delete("/delete", protectionMiddleware, deleteProject);
+router.delete("/delete/:projectName", protectionMiddleware, deleteProject);
 
 export const projectsRouter = router;

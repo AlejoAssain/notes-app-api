@@ -27,7 +27,10 @@ const filterNoteData = async (note) => {
     completed: completed,
     assignedUsername: assignedUname
   };
+};
 
+export const deleteAllNotesOfProject = async(projectId) => {
+  await Note.deleteMany({ project_id: projectId });
 };
 
 const deleteSpaces = word => word.split(" ").join("");

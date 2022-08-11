@@ -1,4 +1,5 @@
 import { Project } from "../models/project.model.js";
+import { deleteAllNotesOfProject } from "./noteController.js";
 import { getUsernameById } from "./userController.js"
 
 
@@ -140,14 +141,14 @@ export const updateProjectData = async (req, res) => {
 };
 
 export const deleteProject = async (req, res) => {
-  const { projectName } = req.body;
+  const { projectName } = req.params;
 
   try {
-    const project = await Project.findOneAndDelete( { owner_id: req.user._id, name: projectName} );
+    const deletedProject = await Project.findOneAndDelete( { owner_id: req.user._id, name: projectName } );
 
-    res.json({
-      removed: project
-    });
+    await deleteAllNotesOfProject(deletedProject._id);
+
+    res.json({deletedProject: await filterProjectsData(deletedProject)});
 
   } catch (e) {
     const errorMessage = "Error: " + e;
