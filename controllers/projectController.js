@@ -67,7 +67,7 @@ export const createProject = async (req, res) => {
     try {
       await newProject.save();
 
-      res.json(newProject);
+      res.json(await filterProjectsData(newProject, req.user.username));
 
       console.log("Project created");
 
@@ -130,7 +130,7 @@ export const updateProjectData = async (req, res) => {
 
     project.save();
 
-    res.json(project);
+    res.json(await filterProjectsData(project, req.user.username));
 
   } catch (e) {
     const errorMessage = "Error: " + e;
@@ -148,7 +148,7 @@ export const deleteProject = async (req, res) => {
 
     await deleteAllNotesOfProject(deletedProject._id);
 
-    res.json({deletedProject: await filterProjectsData(deletedProject)});
+    res.json({deletedProject: await filterProjectsData(deletedProject, req.user.username)});
 
   } catch (e) {
     const errorMessage = "Error: " + e;
