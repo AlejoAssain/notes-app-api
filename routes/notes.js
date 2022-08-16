@@ -13,7 +13,7 @@ import {
 
 const router = express.Router();
 
-router.get("/get/:projectName", protectionMiddleware, getNotesOfProject);
+router.get("/get/:ownerUsername/:projectName", protectionMiddleware, getNotesOfProject);
 router.post("/create", protectionMiddleware, createNote);
 router.patch("/assign", protectionMiddleware, assignUser);
 router.patch("/update", protectionMiddleware, updateNote);

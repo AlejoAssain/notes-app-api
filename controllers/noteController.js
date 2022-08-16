@@ -1,6 +1,6 @@
 import { Note } from "../models/note.model.js";
-import { getProject } from "./projectController.js";
-import { getUser, getUsernameById } from "./userController.js";
+import { getProject, isParticipant } from "./projectController.js";
+import { getIdByUsername, getUser, getUsernameById } from "./userController.js";
 
 
 const filterNoteData = async (note) => {
@@ -43,17 +43,32 @@ export const getNote = async (noteName, projectId) => {
 };
 
 export const getNotesOfProject = async (req, res) => {
-  const { projectName } = req.params;
+  const { ownerUsername, projectName } = req.params;
+  let isOwner;
 
   try {
-    const { _id: projectId } = await getProject(projectName, req.user._id);
+    let projectId;
+    if (ownerUsername === req.user.username) {
+      const { _id: pId } = await getProject(projectName, req.user._id);
+      projectId = pId;
+      isOwner = true;
+    } else {
+      const ownerId = await getIdByUsername(ownerUsername);
+      const { _id: pId } = await getProject(projectName, ownerId);
+      projectId = pId;
+      isOwner = false;
+    };
+
     const notes = await Note.find( { project_id: projectId });
 
-    const filteredNotes = await Promise.all(notes.map(
-      async (note) => await filterNoteData(note)
-    ));
+    const filteredNotes = await Promise.all(notes.map((note) => filterNoteData(note)));
 
-    res.json(filteredNotes);
+    const response = {
+      isOwner: isOwner,
+      notes: filteredNotes
+    };
+
+    res.json(response);
 
   } catch (e) {
     const errorMessage = "Error: " + e;
@@ -173,26 +188,44 @@ export const updateNote = async (req, res) => {
 
 export const toggleNoteState = async (req, res) => {
   const {
+    ownerUsername,
     projectName,
     noteName
   } = req.body;
+  let projectId;
+  let isOwner;
 
   try {
-    const { _id: projectId } = await getProject(projectName, req.user._id);
+    if (ownerUsername === req.user.username) {
+      const { _id: pId } = await getProject(projectName, req.user._id);
+      projectId = pId;
+      isOwner = true;
+    } else {
+      const ownerId = await getIdByUsername(ownerUsername);
+      const { _id: pId } = await getProject(projectName, ownerId);
+      projectId = pId;
+      isOwner = false;
+    };
 
-    const note = await getNote(noteName, projectId);
+    if ((!isOwner && await isParticipant(req.user._id, projectId)) || isOwner) {
+      const note = await getNote(noteName, projectId);
 
-    note.completed = !note.completed;
+      note.completed = !note.completed;
 
-    await note.save();
+      await note.save();
 
-    res.json(await filterNoteData(note));
+      res.json(await filterNoteData(note));
+
+    } else {
+      throw new Error("You're not a participant or the owner");
+
+    };
 
   } catch (e) {
     const errorMessage = "Error: " + e;
 
     console.log(errorMessage);
-    res.json(errorMessage);
+    res.status(401).json(errorMessage);
   };
 };
 

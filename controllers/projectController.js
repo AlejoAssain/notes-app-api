@@ -19,28 +19,29 @@ const filterProjectsData = async (project, ownerUname) => {
     description: description,
     ownerUsername: ownerUsername,
     creationDate: createdAt,
-    updateDate: updatedAt
+    updateDate: updatedAt,
   }
 
   return filteredData;
 };
 
-export const getProject = async (projectName, userId) => {
-  const project = await Project.findOne( { name: projectName, owner_id: userId} );
+export const getProject = async (projectName, ownerId) => {
+  const project = await Project.findOne( { name: projectName, owner_id: ownerId} );
   return project;
 };
+
+export const isParticipant = async (participantId, projectId) => {
+  const project = await Project.findById(projectId);
+  return project.participants_id.includes(participantId);
+}
 
 export const getMyProjects = async (req, res) => {
   const ownedProjects = await Project.find( { owner_id: req.user._id } );
   const participantProjects = await Project.find( { participants_id: req.user._id } );
 
-  const ownedProjectsFiltered = await Promise.all(ownedProjects.map(
-    async (project) => await filterProjectsData(project, req.user.username)
-  ));
+  const ownedProjectsFiltered = await Promise.all(ownedProjects.map((project) => filterProjectsData(project, req.user.username)));
 
-  const participantProjectsFiltered = await Promise.all(participantProjects.map(
-    async (project) => await filterProjectsData(project)
-  ));
+  const participantProjectsFiltered = await Promise.all(participantProjects.map((project) => filterProjectsData(project)));
 
   res.json({
     ownerRole: ownedProjectsFiltered,
