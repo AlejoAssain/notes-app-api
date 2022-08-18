@@ -74,11 +74,17 @@ export const registerUser = async (req, res) => {
   const salt = await bcrypt.genSalt();
   const hash = await bcrypt.hash(req.body.password, salt);
 
+  const {
+    mail: newUserMail,
+    username: newUserUsername,
+    name: newUserName
+  } = req.body;
+
   const newUser = new User({
-    mail: req.body.mail,
-    username: req.body.username,
+    mail: newUserMail,
+    username: newUserUsername,
     password: hash,
-    name: req.body.name
+    name: newUserName
   });
 
   try {
@@ -90,7 +96,7 @@ export const registerUser = async (req, res) => {
 
     res.json(filteredUserData);
 
-    console.log("User added");
+    console.log("New user: " + filteredUserData.username);
 
   } catch (e) {
     const errorMessage = "Error: " + e;
