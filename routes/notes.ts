@@ -1,5 +1,5 @@
-import express from "express";
-import { protectionMiddleware } from "../middleware/authMiddleware.js";
+import express, { Router } from "express";
+import { protectionMiddleware } from "../middleware/authMiddleware";
 import {
   assignUser,
   createNote,
@@ -7,11 +7,11 @@ import {
   getNotesOfProject,
   toggleNoteState,
   updateNote
-} from "../controllers/noteController.js";
+} from "../controllers/noteController";
 
 
 
-const router = express.Router();
+const router : Router = express.Router();
 
 router.get("/get/:ownerUsername/:projectName", protectionMiddleware, getNotesOfProject);
 router.post("/create", protectionMiddleware, createNote);

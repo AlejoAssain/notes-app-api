@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Router } from "express";
 import {
   getAllUsers,
   getMe,
@@ -7,12 +7,12 @@ import {
   loginUser,
   updateUser,
   deleteUser
-} from "../controllers/userController.js";
-import { protectionMiddleware } from "../middleware/authMiddleware.js";
-import { adminOnly } from "../middleware/adminMiddleware.js";
+} from "../controllers/userController";
+import { protectionMiddleware } from "../middleware/authMiddleware";
+import { adminOnly } from "../middleware/adminMiddleware";
 
 
-const router = express.Router();
+const router : Router = express.Router();
 
 router.get("/", protectionMiddleware, adminOnly, getAllUsers);
 router.get("/me", protectionMiddleware, getMe);

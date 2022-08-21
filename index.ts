@@ -2,16 +2,16 @@ import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
-import { usersRouter } from "./routes/users.js";
-import { projectsRouter } from "./routes/projects.js"
-import { notesRouter } from "./routes/notes.js";
+import { usersRouter } from "./routes/users";
+import { projectsRouter } from "./routes/projects"
+import { notesRouter } from "./routes/notes";
 
 
 dotenv.config();
 
-const uri = process.env.ATLAS_URI;
+const uri : string = process.env.ATLAS_URI || "";
 
-mongoose.connect(uri, {useNewUrlParser: true})
+mongoose.connect(uri)
   .then( () => console.log("Database connected...") )
   .catch( e => console.log("Error: " + e));
 
@@ -19,8 +19,8 @@ mongoose.connection.once("open", () => {
   console.log("MongoDB database connection established successfully");
 });
 
-const app = express();
-const port = 4000;
+const app : express.Application = express();
+const port : number = 4000;
 
 // CHANGE THIS
 app.use(cors({

@@ -27,4 +27,11 @@ const userSchema = new mongoose.Schema ({
   timestamps: true
 });
 
+export interface UserModel {
+  mail: string,
+  username: string,
+  password: string,
+  name: string
+};
+
 export const User = mongoose.model("User", userSchema);

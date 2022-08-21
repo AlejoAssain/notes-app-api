@@ -1,15 +1,15 @@
-import express from "express";
-import { protectionMiddleware } from "../middleware/authMiddleware.js"
+import express, { Router } from "express";
+import { protectionMiddleware } from "../middleware/authMiddleware"
 import {
   addParticipant,
   createProject,
   deleteProject,
   getMyProjects,
   updateProjectData
-} from "../controllers/projectController.js";
+} from "../controllers/projectController";
 
 
-const router = express.Router();
+const router : Router = express.Router();
 
 router.get("/myprojects", protectionMiddleware, getMyProjects);
 router.post("/create", protectionMiddleware, createProject);

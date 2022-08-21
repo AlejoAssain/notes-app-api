@@ -1,10 +1,17 @@
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model.js";
+import { UserModel } from "../models/user.model";
 
+
+export interface CustomRequest extends Request {
+  user: UserModel
+};
 
 const getCurrentDateTime = () => new Date();
 
-const showRequestData = (req) => {
+const jwtSecret : string = process.env.JWT_SECRET || "1234";
+
+const showRequestData = (req : Request) => {
   const method = req.method;
   const ipAddress = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
   const path = req.route.path;
@@ -23,7 +30,7 @@ const showRequestData = (req) => {
   `);
 };
 
-export const protectionMiddleware = async (req, res, next) => {
+export const protectionMiddleware = async (req : Request, res: Response, next: NextFunction) => {
   showRequestData(req);
 
   let token;
@@ -34,9 +41,11 @@ export const protectionMiddleware = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(" ")[1];
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, jwtSecret);
 
-      const user = await User.findById(decoded.id);
+      console.log("Decoded: " + decoded);
+
+      const user = await User.findById(decoded);
       req.user = user;
 
       next();
