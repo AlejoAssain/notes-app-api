@@ -8,7 +8,7 @@ import { notesRouter } from "./routes/notes.js";
 
 
 dotenv.config();
-
+//
 const uri = process.env.ATLAS_URI;
 
 mongoose.connect(uri, {useNewUrlParser: true})
