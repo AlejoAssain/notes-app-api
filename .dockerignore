@@ -1,3 +1,4 @@
 node_modules/
-.env.development
+.env
+Todo.txt
 docker-compose.yml
