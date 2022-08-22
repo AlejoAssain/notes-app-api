@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { UserModel } from "../models/user.model";
+import { User, UserModel } from "../models/user.model";
 
 
 export interface CustomRequest extends Request {
@@ -46,7 +46,8 @@ export const protectionMiddleware = async (req : Request, res: Response, next: N
       console.log("Decoded: " + decoded);
 
       const user = await User.findById(decoded);
-      req.user = user;
+
+      (req as CustomRequest).user = user;
 
       next();
 

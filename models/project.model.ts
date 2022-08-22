@@ -24,4 +24,12 @@ const projectSchema = new Schema({
   timestamps: true
 });
 
+export interface ProjectModel {
+  _id: string,
+  name: string,
+  description: string,
+  owner_id: string,
+  participants_id: Array<string>
+};
+
 export const Project = mongoose.model("Project", projectSchema);

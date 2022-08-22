@@ -1,9 +1,11 @@
-import { Note } from "../models/note.model.js";
+import { Response } from "express";
+import { CustomRequest } from "../middleware/authMiddleware.js";
+import { Note, NoteModel } from "../models/note.model.js";
 import { getProject, isParticipant } from "./projectController.js";
-import { getIdByUsername, getUser, getUsernameById } from "./userController.js";
+import { getIdByUsername, getUsernameById } from "./userController.js";
 
 
-const filterNoteData = async (note) => {
+const filterNoteData = async (note: NoteModel) => {
   const {
     name,
     title,
@@ -13,10 +15,10 @@ const filterNoteData = async (note) => {
     assigned_user_id: assignedUserId
   } = note;
 
-  let assignedUname = null;
+  let assignedUname : string | null = null;
 
   if (assignedUserId) {
-    assignedUsername = await getUsernameById(assignedUserId);
+    assignedUname = await getUsernameById(assignedUserId);
   };
 
   return {
@@ -29,20 +31,20 @@ const filterNoteData = async (note) => {
   };
 };
 
-export const deleteAllNotesOfProject = async(projectId) => {
+export const deleteAllNotesOfProject = async (projectId: string) => {
   await Note.deleteMany({ project_id: projectId });
 };
 
-const deleteSpaces = word => word.split(" ").join("");
+const deleteSpaces = (word : string) => word.split(" ").join("");
 
-const generateNoteName = noteTitle => deleteSpaces(noteTitle).toLowerCase();
+const generateNoteName = (noteTitle : string) => deleteSpaces(noteTitle).toLowerCase();
 
-export const getNote = async (noteName, projectId) => {
+export const getNote = async (noteName: string, projectId: string) => {
   const note = await Note.findOne( { name: noteName, project_id: projectId } );
   return note;
 };
 
-export const getNotesOfProject = async (req, res) => {
+export const getNotesOfProject = async (req: CustomRequest, res: Response) => {
   const { ownerUsername, projectName } = req.params;
   let isOwner;
 
@@ -78,7 +80,7 @@ export const getNotesOfProject = async (req, res) => {
   };
 };
 
-export const createNote = async (req, res) => {
+export const createNote = async (req: CustomRequest, res: Response) => {
   const {
     projectName,
     title: noteTitle,
@@ -119,7 +121,7 @@ export const createNote = async (req, res) => {
   };
 };
 
-export const assignUser = async (req, res) => {
+export const assignUser = async (req: CustomRequest, res: Response) => {
   const {
     projectName,
     usernameToAssign,
@@ -127,7 +129,7 @@ export const assignUser = async (req, res) => {
   } = req.body;
 
   try {
-    const { _id: userIdToAssign } = await getUser(usernameToAssign);
+    const userIdToAssign = await getIdByUsername(usernameToAssign);
 
     const project = await getProject(projectName, req.user._id);
 
@@ -152,7 +154,7 @@ export const assignUser = async (req, res) => {
   };
 };
 
-export const updateNote = async (req, res) => {
+export const updateNote = async (req: CustomRequest, res: Response) => {
   const {
     noteName,
     projectName,
@@ -186,7 +188,7 @@ export const updateNote = async (req, res) => {
   };
 };
 
-export const toggleNoteState = async (req, res) => {
+export const toggleNoteState = async (req: CustomRequest, res: Response) => {
   const {
     ownerUsername,
     projectName,
@@ -229,7 +231,7 @@ export const toggleNoteState = async (req, res) => {
   };
 };
 
-export const deleteNote = async (req, res) => {
+export const deleteNote = async (req: CustomRequest, res: Response) => {
   const {
     projectName,
     noteName

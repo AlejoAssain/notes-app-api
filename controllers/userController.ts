@@ -1,9 +1,21 @@
 import bcrypt from "bcrypt";
+import { Response } from "express";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.model.js";
+import { CustomRequest } from "../middleware/authMiddleware";
+import { User, UserModel } from "../models/user.model";
 
 
-const filterUserData = user => {
+interface FilteredUser {
+  mail: string,
+  username: string,
+  name: string
+};
+
+interface FilteredUserToken extends FilteredUser {
+  token: string
+};
+
+const filterUserData = (user : UserModel) : FilteredUser => {
   const { mail: uMail, username:uUsername, name: uName } = user;
   return {
     mail: uMail,
@@ -12,31 +24,41 @@ const filterUserData = user => {
   };
 };
 
-const generateToken = id => jwt.sign(
-  { id },
-  process.env.JWT_SECRET,
-  {
-    expiresIn: "30d",
-  }
-);
+const generateToken = (id: string) => {
+  let sign : string;
 
-export const getIdByUsername = async (uName) => {
+  if (process.env.JWT_SECRET) {
+    sign = jwt.sign(
+      { id },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "30d",
+      }
+    )
+  } else {
+    throw new Error("Internal error");
+  };
+
+  return sign;
+};
+
+export const getIdByUsername = async (uName: string) => {
   const user = await User.findOne( { username: uName } );
   return user._id;
 };
 
-export const getUsernameById = async (uId) => {
+export const getUsernameById = async (uId: string) => {
   const user = await User.findById(uId);
   return user.username;
 };
 
-export const getMe = async (req, res) => {
+export const getMe = async (req: CustomRequest, res: Response) => {
   const filteredUserData = filterUserData(req.user);
 
   res.json(filteredUserData);
 }
 
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req: CustomRequest, res: Response) => {
   try {
     const users = await User.find();
     console.log(users);
@@ -53,12 +75,12 @@ export const getAllUsers = async (req, res) => {
   };
 };
 
-export const getUser = async (req, res) => {
+export const getUser = async (req: CustomRequest, res: Response) => {
   try {
     const user = await User.findOne( { username: req.params.username } );
     console.log("Sending:\n", user);
 
-    const filteredUserData = filterUserData(user);
+    const filteredUserData = await filterUserData(user);
 
     res.json(filteredUserData);
 
@@ -70,7 +92,7 @@ export const getUser = async (req, res) => {
   };
 };
 
-export const registerUser = async (req, res) => {
+export const registerUser = async (req: CustomRequest, res: Response) => {
   const salt = await bcrypt.genSalt();
   const hash = await bcrypt.hash(req.body.password, salt);
 
@@ -92,7 +114,7 @@ export const registerUser = async (req, res) => {
 
     const filteredUserData = filterUserData(newUser);
 
-    filteredUserData.token = generateToken(newUser._id);
+    (filteredUserData as FilteredUserToken).token = generateToken(newUser._id);
 
     res.json(filteredUserData);
 
@@ -106,7 +128,7 @@ export const registerUser = async (req, res) => {
   };
 };
 
-export const loginUser = async (req, res) => {
+export const loginUser = async (req: CustomRequest, res: Response) => {
   const { username: uName, password: uPassword } = req.body;
 
   const errorStatusCode = 401;
@@ -122,7 +144,7 @@ export const loginUser = async (req, res) => {
       const filteredUserData = filterUserData(user);
 
       const token = generateToken(user._id);
-      filteredUserData.token = token;
+      (filteredUserData as FilteredUserToken).token = token;
 
       res.json(filteredUserData);
 
@@ -130,7 +152,6 @@ export const loginUser = async (req, res) => {
 
     } else {
       res.status(errorStatusCode).json("Wrong password");
-      console.log("Wrong password")
     };
 
   } else {
@@ -139,7 +160,7 @@ export const loginUser = async (req, res) => {
   };
 };
 
-export const updateUser = async (req, res) => {
+export const updateUser = async (req: CustomRequest, res: Response) => {
   try {
     const user = await User.findById(req.user._id);
 
@@ -159,7 +180,7 @@ export const updateUser = async (req, res) => {
   };
 };
 
-export const deleteUser = async (req, res) => {
+export const deleteUser = async (req: CustomRequest, res: Response) => {
   try {
     const user = await User.findByIdAndDelete(req.user._id);
 

@@ -43,4 +43,15 @@ const noteSchema = new Schema({
   timestamps: true
 });
 
+export interface NoteModel {
+  _id: string,
+  name: string,
+  title: string,
+  content: string,
+  priority: number,
+  project_id: string,
+  completed: boolean,
+  assigned_user_id: string
+}
+
 export const Note = mongoose.model("Note", noteSchema);

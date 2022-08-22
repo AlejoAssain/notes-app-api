@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema ({
 });
 
 export interface UserModel {
+  _id: string
   mail: string,
   username: string,
   password: string,
