@@ -1,15 +1,15 @@
-import { Project } from "../models/project.model.js";
+import { Response } from "express";
+import { CustomRequest } from "../middleware/authMiddleware.js";
+import { Project, ProjectModel } from "../models/project.model.js";
 import { deleteAllNotesOfProject } from "./noteController.js";
 import { getUsernameById } from "./userController.js"
 
 
-const filterProjectsData = async (project, ownerUname) => {
+const filterProjectsData = async (project: ProjectModel, ownerUname: string | undefined) => {
   const {
     name,
     description,
     owner_id: pOwnerId,
-    createdAt,
-    updatedAt
   } = project;
 
   const ownerUsername = ownerUname ? ownerUname : await getUsernameById(pOwnerId);
@@ -18,30 +18,32 @@ const filterProjectsData = async (project, ownerUname) => {
     name: name,
     description: description,
     ownerUsername: ownerUsername,
-    creationDate: createdAt,
-    updateDate: updatedAt,
   }
 
   return filteredData;
 };
 
-export const getProject = async (projectName, ownerId) => {
+export const getProject = async (projectName: string, ownerId: string) => {
   const project = await Project.findOne( { name: projectName, owner_id: ownerId} );
   return project;
 };
 
-export const isParticipant = async (participantId, projectId) => {
+export const isParticipant = async (participantId: string, projectId: string) => {
   const project = await Project.findById(projectId);
   return project.participants_id.includes(participantId);
 }
 
-export const getMyProjects = async (req, res) => {
+export const getMyProjects = async (req: CustomRequest, res: Response) => {
   const ownedProjects = await Project.find( { owner_id: req.user._id } );
   const participantProjects = await Project.find( { participants_id: req.user._id } );
 
-  const ownedProjectsFiltered = await Promise.all(ownedProjects.map((project) => filterProjectsData(project, req.user.username)));
+  const ownedProjectsFiltered = await Promise.all(ownedProjects.map(
+    (project) => filterProjectsData(project, req.user.username)
+  ));
 
-  const participantProjectsFiltered = await Promise.all(participantProjects.map((project) => filterProjectsData(project)));
+  const participantProjectsFiltered = await Promise.all(participantProjects.map(
+    (project) => filterProjectsData(project, undefined)
+  ));
 
   res.json({
     ownerRole: ownedProjectsFiltered,
@@ -49,7 +51,7 @@ export const getMyProjects = async (req, res) => {
   });
 };
 
-export const createProject = async (req, res) => {
+export const createProject = async (req: CustomRequest, res: Response) => {
   const {
     name: pName,
     description: pDesc,
@@ -86,32 +88,32 @@ export const createProject = async (req, res) => {
   };
 };
 
-export const addParticipant = async (req, res) => {
-  const { participantUsername, projectName } = req.body;
+// export const addParticipant = async (req: CustomRequest, res: Response) => {
+//   const { participantUsername, projectName } = req.body;
 
-  try {
-    const { _id: participantId } = await User.findOne( { username: participantUsername });
+//   try {
+//     const { _id: participantId } = await User.findOne({ username: participantUsername });
 
-    const project = await Project.findOne( { name: projectName, owner_id: req.user._id } )
+//     const project = await Project.findOne({ name: projectName, owner_id: req.user._id });
 
-    project.participants_id.push(participantId);
+//     project.participants_id.push(participantId);
 
-    project.save();
+//     project.save();
 
-    const message = `Owner ${req.user.username} added participant ${participantUsername}`;
+//     const message = `Owner ${req.user.username} added participant ${participantUsername}`;
 
-    console.log(message);
-    res.json(message);
+//     console.log(message);
+//     res.json(message);
 
-  } catch (e) {
-    const errorMessage = "Error: " + e;
+//   } catch (e) {
+//     const errorMessage = "Error: " + e;
 
-    console.log(errorMessage);
-    res.json(errorMessage);
-  };
-};
+//     console.log(errorMessage);
+//     res.json(errorMessage);
+//   };
+// };
 
-export const updateProjectData = async (req, res) => {
+export const updateProjectData = async (req: CustomRequest, res: Response) => {
   const {
     name: projectName,
     newName,
@@ -141,7 +143,7 @@ export const updateProjectData = async (req, res) => {
   };
 };
 
-export const deleteProject = async (req, res) => {
+export const deleteProject = async (req: CustomRequest, res: Response) => {
   const { projectName } = req.params;
 
   try {

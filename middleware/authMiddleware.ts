@@ -46,7 +46,8 @@ export const protectionMiddleware = async (req : Request, res: Response, next: N
       console.log("Decoded: " + decoded);
 
       const user = await User.findById(decoded);
-      req.user = user;
+
+      (req as CustomRequest).user = user;
 
       next();
 
