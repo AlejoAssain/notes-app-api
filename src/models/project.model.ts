@@ -1,7 +1,12 @@
-import mongoose from "mongoose";
+import { Schema, Document, model } from "mongoose";
 
 
-const Schema = mongoose.Schema;
+export interface IProject extends Document {
+  name: string,
+  description: string,
+  owner_id: string,
+  participants_id: Array<string>,
+};
 
 const projectSchema = new Schema({
   name: {
@@ -24,12 +29,4 @@ const projectSchema = new Schema({
   timestamps: true
 });
 
-export interface ProjectModel {
-  _id: string,
-  name: string,
-  description: string,
-  owner_id: string,
-  participants_id: Array<string>
-};
-
-export const Project = mongoose.model("Project", projectSchema);
+export const Project = model<IProject>("Project", projectSchema);

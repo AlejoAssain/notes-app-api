@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 import { protectionMiddleware } from "../middleware/authMiddleware"
 import {
-  addParticipant,
+  // addParticipant,
   createProject,
   deleteProject,
   getMyProjects,
@@ -13,7 +13,7 @@ const router : Router = express.Router();
 
 router.get("/myprojects", protectionMiddleware, getMyProjects);
 router.post("/create", protectionMiddleware, createProject);
-router.patch("/addparticipant", protectionMiddleware, addParticipant);
+// router.patch("/addparticipant", protectionMiddleware, addParticipant);
 router.patch("/update", protectionMiddleware, updateProjectData);
 router.delete("/delete/:projectName", protectionMiddleware, deleteProject);
 

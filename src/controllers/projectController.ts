@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { CustomRequest } from "../middleware/authMiddleware.js";
-import { Project, ProjectModel } from "../models/project.model.js";
+import { Project, IProject } from "../models/project.model.js";
 import { deleteAllNotesOfProject } from "./noteController.js";
 import { getUsernameById } from "./userController.js"
 
 
-const filterProjectsData = async (project: ProjectModel, ownerUname: string | undefined) => {
+const filterProjectsData = async (project: IProject, ownerUname: string | undefined) => {
   const {
     name,
     description,
@@ -25,12 +25,18 @@ const filterProjectsData = async (project: ProjectModel, ownerUname: string | un
 
 export const getProject = async (projectName: string, ownerId: string) => {
   const project = await Project.findOne( { name: projectName, owner_id: ownerId} );
+
+  if (!project) throw new Error("Project doesn't exist");
+
   return project;
 };
 
 export const isParticipant = async (participantId: string, projectId: string) => {
   const project = await Project.findById(projectId);
-  return project.participants_id.includes(participantId);
+  if (project) {
+    return project.participants_id.includes(participantId);
+  }
+  return false;
 }
 
 export const getMyProjects = async (req: CustomRequest, res: Response) => {
@@ -123,23 +129,27 @@ export const updateProjectData = async (req: CustomRequest, res: Response) => {
   try {
     const project = await Project.findOne( { owner_id: req.user._id, name: projectName } );
 
-    if (newName) {
-      project.name = newName;
-    };
+    if (project) {
+      if (newName) {
+        project.name = newName;
+      };
 
-    if (newDescription) {
-      project.description = newDescription;
-    };
+      if (newDescription) {
+        project.description = newDescription;
+      };
 
-    project.save();
+      project.save();
 
-    res.json(await filterProjectsData(project, req.user.username));
+      res.json(await filterProjectsData(project, req.user.username));
+    } else {
+      throw new Error("Project doesn't exists");
+    }
 
   } catch (e) {
     const errorMessage = "Error: " + e;
 
     console.log(errorMessage);
-    res.json(errorMessage);
+    res.status(404).json(errorMessage);
   };
 };
 
@@ -149,9 +159,13 @@ export const deleteProject = async (req: CustomRequest, res: Response) => {
   try {
     const deletedProject = await Project.findOneAndDelete( { owner_id: req.user._id, name: projectName } );
 
-    await deleteAllNotesOfProject(deletedProject._id);
+    if (deletedProject) {
+      await deleteAllNotesOfProject(deletedProject._id);
 
-    res.json({deletedProject: await filterProjectsData(deletedProject, req.user.username)});
+      res.json({deletedProject: await filterProjectsData(deletedProject, req.user.username)});
+    } else {
+
+    }
 
   } catch (e) {
     const errorMessage = "Error: " + e;

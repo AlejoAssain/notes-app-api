@@ -1,9 +1,12 @@
 import bcrypt from "bcrypt";
 import { Response } from "express";
+import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { CustomRequest } from "../middleware/authMiddleware";
-import { User, UserModel } from "../models/user.model";
+import { User, IUser } from "../models/user.model";
 
+
+dotenv.config();
 
 interface FilteredUser {
   mail: string,
@@ -15,7 +18,7 @@ interface FilteredUserToken extends FilteredUser {
   token: string
 };
 
-const filterUserData = (user : UserModel) : FilteredUser => {
+const filterUserData = (user : IUser) : FilteredUser => {
   const { mail: uMail, username:uUsername, name: uName } = user;
   return {
     mail: uMail,
@@ -44,11 +47,17 @@ const generateToken = (id: string) => {
 
 export const getIdByUsername = async (uName: string) => {
   const user = await User.findOne( { username: uName } );
+
+  if (!user) throw new Error("User not found");
+
   return user._id;
 };
 
 export const getUsernameById = async (uId: string) => {
   const user = await User.findById(uId);
+
+  if (!user) throw new Error("User not found");
+
   return user.username;
 };
 
@@ -78,9 +87,12 @@ export const getAllUsers = async (req: CustomRequest, res: Response) => {
 export const getUser = async (req: CustomRequest, res: Response) => {
   try {
     const user = await User.findOne( { username: req.params.username } );
+
+    if (!user) throw new Error("User not found");
+
     console.log("Sending:\n", user);
 
-    const filteredUserData = await filterUserData(user);
+    const filteredUserData = filterUserData(user);
 
     res.json(filteredUserData);
 
@@ -164,6 +176,8 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
   try {
     const user = await User.findById(req.user._id);
 
+    if (!user) throw new Error("User not found")
+
     Object.assign(user, req.body);
 
     user.save();
@@ -183,6 +197,8 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
 export const deleteUser = async (req: CustomRequest, res: Response) => {
   try {
     const user = await User.findByIdAndDelete(req.user._id);
+
+    if (!user) throw new Error("User not found");
 
     const filteredUserData = filterUserData(user);
 

@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-import express from "express";
+import express, { Application } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 import { usersRouter } from "./routes/users";
@@ -12,14 +12,14 @@ dotenv.config();
 const uri : string = process.env.ATLAS_URI || "";
 
 mongoose.connect(uri)
-  .then( () => console.log("Database connected...") )
-  .catch( e => console.log("Error: " + e));
+  .then(() => console.log("Database successful connection..."))
+  .catch(e => console.log("Error: " + e));
 
 mongoose.connection.once("open", () => {
   console.log("MongoDB database connection established successfully");
 });
 
-const app : express.Application = express();
+const app : Application = express();
 const port : number = 4000;
 
 // CHANGE THIS

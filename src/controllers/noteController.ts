@@ -1,11 +1,11 @@
 import { Response } from "express";
 import { CustomRequest } from "../middleware/authMiddleware.js";
-import { Note, NoteModel } from "../models/note.model.js";
+import { Note, INote } from "../models/note.model.js";
 import { getProject, isParticipant } from "./projectController.js";
 import { getIdByUsername, getUsernameById } from "./userController.js";
 
 
-const filterNoteData = async (note: NoteModel) => {
+const filterNoteData = async (note: INote) => {
   const {
     name,
     title,
@@ -41,6 +41,9 @@ const generateNoteName = (noteTitle : string) => deleteSpaces(noteTitle).toLower
 
 export const getNote = async (noteName: string, projectId: string) => {
   const note = await Note.findOne( { name: noteName, project_id: projectId } );
+
+  if (!note) throw new Error("Note doesn't exist")
+
   return note;
 };
 
@@ -51,14 +54,25 @@ export const getNotesOfProject = async (req: CustomRequest, res: Response) => {
   try {
     let projectId;
     if (ownerUsername === req.user.username) {
-      const { _id: pId } = await getProject(projectName, req.user._id);
-      projectId = pId;
-      isOwner = true;
+      const project = await getProject(projectName, req.user._id);
+      if (project) {
+        projectId = project._id;
+        isOwner = true;
+      } else {
+        throw new Error("Project doesn't exist");
+      }
+
+
     } else {
       const ownerId = await getIdByUsername(ownerUsername);
-      const { _id: pId } = await getProject(projectName, ownerId);
-      projectId = pId;
-      isOwner = false;
+      const project = await getProject(projectName, ownerId);
+      if (project) {
+        projectId = project._id;
+        isOwner = false;
+      } else {
+        throw new Error("Project doesn't exist");
+      }
+
     };
 
     const notes = await Note.find( { project_id: projectId });
@@ -89,30 +103,37 @@ export const createNote = async (req: CustomRequest, res: Response) => {
   } = req.body;
 
   try {
-    const { _id: projectId } = await getProject(projectName, req.user._id);
+    const project = await getProject(projectName, req.user._id);
 
-    const newNoteName = generateNoteName(noteTitle);
+    if (project) {
+      const projectId = project._id
 
-    if (await Note.findOne({ project_id: projectId, name: newNoteName})) {
-      throw new Error("Note already exists")
-    } else {
-      const newNote = new Note({
-        name: newNoteName,
-        title: noteTitle,
-        content: noteContent,
-        priority: Number(notePriority),
-        project_id: projectId,
-        completed: false,
-        assigned_user_id: null
-      });
+      const newNoteName = generateNoteName(noteTitle);
+      if (await Note.findOne({ project_id: projectId, name: newNoteName})) {
+        throw new Error("Note already exists");
+      } else {
+        const newNote = new Note({
+          name: newNoteName,
+          title: noteTitle,
+          content: noteContent,
+          priority: Number(notePriority),
+          project_id: projectId,
+          completed: false,
+          assigned_user_id: null
+        });
 
-      await newNote.save();
+        await newNote.save();
 
-      console.log("Note created");
+        console.log("Note created");
 
-      res.json(await filterNoteData(newNote));
+        res.json(await filterNoteData(newNote));
 
-    };
+      };
+    }
+
+
+
+
   } catch (e) {
     const errorMessage = "Error: " + e;
 
@@ -133,8 +154,16 @@ export const assignUser = async (req: CustomRequest, res: Response) => {
 
     const project = await getProject(projectName, req.user._id);
 
+    if (!project) {
+      throw new Error("Project doesn't exist")
+    }
+
     if ( project.participants_id.includes(userIdToAssign) ) {
       const note = await getNote(noteName, project._id);
+
+      if (!note) {
+        throw new Error("Note doesn't exist")
+      }
 
       note.assigned_user_id = userIdToAssign;
 
@@ -162,13 +191,15 @@ export const updateNote = async (req: CustomRequest, res: Response) => {
   } = req.body;
 
   try {
-    const { _id: projectId } = await getProject(projectName, req.user._id);
+    const project = await getProject(projectName, req.user._id);
+
+    if (!project) throw new Error("Project doesn't exist")
+
+    const projectId = project._id
 
     const note = await getNote(noteName, projectId);
 
-    if (!note) {
-      throw new Error("Note not found!")
-    }
+    if (!note) throw new Error("Note not found!")
 
     Object.assign(note, newAttrs);
 
@@ -199,18 +230,26 @@ export const toggleNoteState = async (req: CustomRequest, res: Response) => {
 
   try {
     if (ownerUsername === req.user.username) {
-      const { _id: pId } = await getProject(projectName, req.user._id);
-      projectId = pId;
+      const project = await getProject(projectName, req.user._id);
+
+      if (!project) throw new Error("Project doesn't exist");
+
+      projectId = project._id;
       isOwner = true;
     } else {
       const ownerId = await getIdByUsername(ownerUsername);
-      const { _id: pId } = await getProject(projectName, ownerId);
-      projectId = pId;
+      const project = await getProject(projectName, ownerId);
+
+      if (!project) throw new Error("Project doesn't exist");
+
+      projectId = project._id;
       isOwner = false;
     };
 
     if ((!isOwner && await isParticipant(req.user._id, projectId)) || isOwner) {
       const note = await getNote(noteName, projectId);
+
+
 
       note.completed = !note.completed;
 
@@ -244,6 +283,8 @@ export const deleteNote = async (req: CustomRequest, res: Response) => {
       project_id: projectId,
       name: noteName
     });
+
+    if (!deletedNote) throw new Error("Note not found");
 
     res.json(filterNoteData(deletedNote));
 

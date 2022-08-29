@@ -1,10 +1,13 @@
 import { NextFunction, Request, Response } from "express";
+import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { User, UserModel } from "../models/user.model";
+import { User, IUser } from "../models/user.model";
 
+
+dotenv.config();
 
 export interface CustomRequest extends Request {
-  user: UserModel
+  user: IUser
 };
 
 const getCurrentDateTime = () => new Date();
@@ -43,9 +46,9 @@ export const protectionMiddleware = async (req : Request, res: Response, next: N
 
       const decoded = jwt.verify(token, jwtSecret);
 
-      console.log("Decoded: " + decoded);
-
       const user = await User.findById(decoded);
+
+      if (!user) throw new Error("User auth failed");
 
       (req as CustomRequest).user = user;
 

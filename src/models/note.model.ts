@@ -1,7 +1,15 @@
-import mongoose from "mongoose";
+import { Schema, Document, model } from "mongoose";
 
 
-const Schema = mongoose.Schema;
+export interface INote extends Document {
+  name: string,
+  title: string,
+  content: string,
+  priority: number,
+  project_id: string,
+  completed: boolean,
+  assigned_user_id: string
+}
 
 const noteSchema = new Schema({
   name: {
@@ -43,15 +51,4 @@ const noteSchema = new Schema({
   timestamps: true
 });
 
-export interface NoteModel {
-  _id: string,
-  name: string,
-  title: string,
-  content: string,
-  priority: number,
-  project_id: string,
-  completed: boolean,
-  assigned_user_id: string
-}
-
-export const Note = mongoose.model("Note", noteSchema);
+export const Note = model<INote>("Note", noteSchema);
