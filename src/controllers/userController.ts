@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
-import { Response } from "express";
+import { Request, Response } from "express";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { CustomRequest } from "../middleware/authMiddleware";
+import { getRequestUser } from "../middleware/authMiddleware";
 import { User, IUser } from "../models/user.model";
 
 
@@ -50,7 +50,7 @@ export const getIdByUsername = async (uName: string) => {
 
   if (!user) throw new Error("User not found");
 
-  return user._id;
+  return user.id;
 };
 
 export const getUsernameById = async (uId: string) => {
@@ -61,13 +61,15 @@ export const getUsernameById = async (uId: string) => {
   return user.username;
 };
 
-export const getMe = async (req: CustomRequest, res: Response) => {
-  const filteredUserData = filterUserData(req.user);
+export const getMe = async (req: Request, res: Response) => {
+  const currentUser = getRequestUser(req);
+
+  const filteredUserData = filterUserData(currentUser);
 
   res.json(filteredUserData);
 }
 
-export const getAllUsers = async (req: CustomRequest, res: Response) => {
+export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await User.find();
     console.log(users);
@@ -84,7 +86,7 @@ export const getAllUsers = async (req: CustomRequest, res: Response) => {
   };
 };
 
-export const getUser = async (req: CustomRequest, res: Response) => {
+export const getUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findOne( { username: req.params.username } );
 
@@ -104,7 +106,7 @@ export const getUser = async (req: CustomRequest, res: Response) => {
   };
 };
 
-export const registerUser = async (req: CustomRequest, res: Response) => {
+export const registerUser = async (req: Request, res: Response) => {
   const salt = await bcrypt.genSalt();
   const hash = await bcrypt.hash(req.body.password, salt);
 
@@ -140,7 +142,7 @@ export const registerUser = async (req: CustomRequest, res: Response) => {
   };
 };
 
-export const loginUser = async (req: CustomRequest, res: Response) => {
+export const loginUser = async (req: Request, res: Response) => {
   const { username: uName, password: uPassword } = req.body;
 
   const errorStatusCode = 401;
@@ -172,9 +174,11 @@ export const loginUser = async (req: CustomRequest, res: Response) => {
   };
 };
 
-export const updateUser = async (req: CustomRequest, res: Response) => {
+export const updateUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user._id);
+    const currentUser = getRequestUser(req);
+
+    const user = await User.findById(currentUser._id);
 
     if (!user) throw new Error("User not found")
 
@@ -194,9 +198,11 @@ export const updateUser = async (req: CustomRequest, res: Response) => {
   };
 };
 
-export const deleteUser = async (req: CustomRequest, res: Response) => {
+export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const user = await User.findByIdAndDelete(req.user._id);
+    const currentUser = getRequestUser(req);
+
+    const user = await User.findByIdAndDelete(currentUser._id);
 
     if (!user) throw new Error("User not found");
 

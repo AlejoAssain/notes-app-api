@@ -10,6 +10,10 @@ export interface CustomRequest extends Request {
   user: IUser
 };
 
+export const getRequestUser = (req: Request) => {
+  return (req as CustomRequest).user;
+}
+
 const getCurrentDateTime = () => new Date();
 
 const jwtSecret : string = process.env.JWT_SECRET || "1234";

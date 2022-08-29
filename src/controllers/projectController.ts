@@ -1,5 +1,6 @@
-import { Response } from "express";
-import { CustomRequest } from "../middleware/authMiddleware.js";
+import { Request, Response } from "express";
+import mongoose, { ObjectId } from "mongoose";
+import { getRequestUser } from "../middleware/authMiddleware.js";
 import { Project, IProject } from "../models/project.model.js";
 import { deleteAllNotesOfProject } from "./noteController.js";
 import { getUsernameById } from "./userController.js"
@@ -39,12 +40,17 @@ export const isParticipant = async (participantId: string, projectId: string) =>
   return false;
 }
 
-export const getMyProjects = async (req: CustomRequest, res: Response) => {
-  const ownedProjects = await Project.find( { owner_id: req.user._id } );
-  const participantProjects = await Project.find( { participants_id: req.user._id } );
+export const getMyProjects = async (req: Request, res: Response) => {
+  const currentUser = getRequestUser(req);
+  console.log(currentUser)
+
+  const userId = new mongoose.Types.ObjectId(currentUser._id);
+
+  const ownedProjects = await Project.find( { owner_id: userId } );
+  const participantProjects = await Project.find( { participants_id: userId } );
 
   const ownedProjectsFiltered = await Promise.all(ownedProjects.map(
-    (project) => filterProjectsData(project, req.user.username)
+    (project) => filterProjectsData(project, currentUser.username)
   ));
 
   const participantProjectsFiltered = await Promise.all(participantProjects.map(
@@ -57,26 +63,28 @@ export const getMyProjects = async (req: CustomRequest, res: Response) => {
   });
 };
 
-export const createProject = async (req: CustomRequest, res: Response) => {
+export const createProject = async (req: Request, res: Response) => {
   const {
     name: pName,
     description: pDesc,
   } = req.body;
 
-  const projectsWithName = await Project.find( { name: pName, owner_id: req.user._id } )
+  const currentUser = getRequestUser(req);
+
+  const projectsWithName = await Project.find( { name: pName, owner_id: currentUser._id } )
 
   if ( projectsWithName.length === 0 ) {
     const newProject = new Project({
       name: pName,
       description: pDesc,
-      owner_id: req.user._id,
+      owner_id: currentUser._id,
       participants_id: []
     });
 
     try {
       await newProject.save();
 
-      res.json(await filterProjectsData(newProject, req.user.username));
+      res.json(await filterProjectsData(newProject, currentUser.username));
 
       console.log("Project created");
 
@@ -119,7 +127,7 @@ export const createProject = async (req: CustomRequest, res: Response) => {
 //   };
 // };
 
-export const updateProjectData = async (req: CustomRequest, res: Response) => {
+export const updateProjectData = async (req: Request, res: Response) => {
   const {
     name: projectName,
     newName,
@@ -127,7 +135,9 @@ export const updateProjectData = async (req: CustomRequest, res: Response) => {
   } = req.body;
 
   try {
-    const project = await Project.findOne( { owner_id: req.user._id, name: projectName } );
+    const currentUser = getRequestUser(req);
+
+    const project = await Project.findOne( { owner_id: currentUser._id, name: projectName } );
 
     if (project) {
       if (newName) {
@@ -140,7 +150,7 @@ export const updateProjectData = async (req: CustomRequest, res: Response) => {
 
       project.save();
 
-      res.json(await filterProjectsData(project, req.user.username));
+      res.json(await filterProjectsData(project, currentUser.username));
     } else {
       throw new Error("Project doesn't exists");
     }
@@ -153,16 +163,18 @@ export const updateProjectData = async (req: CustomRequest, res: Response) => {
   };
 };
 
-export const deleteProject = async (req: CustomRequest, res: Response) => {
+export const deleteProject = async (req: Request, res: Response) => {
   const { projectName } = req.params;
 
   try {
-    const deletedProject = await Project.findOneAndDelete( { owner_id: req.user._id, name: projectName } );
+    const currentUser = getRequestUser(req);
+
+    const deletedProject = await Project.findOneAndDelete( { owner_id: currentUser._id, name: projectName } );
 
     if (deletedProject) {
       await deleteAllNotesOfProject(deletedProject._id);
 
-      res.json({deletedProject: await filterProjectsData(deletedProject, req.user.username)});
+      res.json({deletedProject: await filterProjectsData(deletedProject, currentUser.username)});
     } else {
 
     }
