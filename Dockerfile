@@ -8,10 +8,12 @@ RUN mkdir -p /usr/src/app
 
 WORKDIR /usr/src/app
 
+COPY package*.json .
+
+RUN npm ci
+
 COPY . .
 
-RUN npm ci --production
-
-EXPOSE 80
+EXPOSE 4000
 
 CMD ["node", "index.js"]

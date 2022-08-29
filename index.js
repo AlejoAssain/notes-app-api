@@ -20,7 +20,7 @@ mongoose.connection.once("open", () => {
 });
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 // CHANGE THIS
 app.use(cors({
