@@ -1,18 +1,14 @@
 import { IsOptional, IsString } from "class-validator";
 
 
-export class UpdateUserDto {
+export class UpdateUserDataDto {
   @IsString()
   @IsOptional()
-  readonly mail: string;
+  readonly email: string;
 
   @IsString()
   @IsOptional()
   readonly username: string;
-
-  @IsString()
-  @IsOptional()
-  readonly password: string;
 
   @IsString()
   @IsOptional()

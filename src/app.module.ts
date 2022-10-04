@@ -3,20 +3,17 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { DatabaseModule } from './database/database.module';
 import { UsersModule } from './modules/users/users.module';
-import { ProjectsModule } from './modules/projects/projects.module';
-import { NotesModule } from './modules/notes/notes.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     DatabaseModule,
-    UsersModule,
-    ProjectsModule,
-    NotesModule,
+    AuthModule,
+    UsersModule
   ],
   controllers: [],
-  providers: [],
 })
 export class AppModule {
   static port: number;

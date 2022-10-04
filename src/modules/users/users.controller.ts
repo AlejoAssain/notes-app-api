@@ -1,16 +1,19 @@
 import {
   Controller,
   Get,
-  Post,
   Patch,
   Delete,
-  Param,
   Body,
-  Query
+  UseGuards,
+  Req
 } from '@nestjs/common';
 
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import {
+  UpdateUserDataDto,
+  UpdateUserPasswordDto
+} from './dto';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 
 
 @Controller('users')
@@ -18,21 +21,27 @@ export class UsersController {
 
   constructor(private readonly usersService: UsersService) {}
 
-  @Get('')
-  getUsers() {
-    return this.usersService.getUsers();
+  @UseGuards(JwtAuthGuard)
+  @Get('/me')
+  getCurrentUser(@Req() request) {
+    return this.usersService.getCurrentUser(request.user.username);
   }
 
-  @Get('/:id')
-  getUser(@Param('id') idParam : number) {
-    return this.usersService.getUser(idParam);
+  @UseGuards(JwtAuthGuard)
+  @Patch('/update-data')
+  updateUserData(@Body() newUserData: UpdateUserDataDto, @Req() request) {
+    return this.usersService.updateUserData(newUserData, request.user.username);
   }
 
-  @Post('/')
-  createUser(@Body() body : CreateUserDto) {
-    return this.usersService.createUser(body);
+  @UseGuards(JwtAuthGuard)
+  @Patch('/update-password')
+  updateUserPassword(@Body() newPasswordPasswordData: UpdateUserPasswordDto, @Req() request) {
+    return this.usersService.updateUserPassword(newPasswordPasswordData, request.user.username)
   }
 
-  @Patch('/:id')
-  updateUser(@Body() body : UpdateUserDto) {}
+  @UseGuards(JwtAuthGuard)
+  @Delete('/delete')
+  deleteUser(@Req() request) {
+    return this.usersService.removeUser(request.user.username)
+  }
 }
