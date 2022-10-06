@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { hash } from 'bcrypt';
 import { Repository } from 'typeorm';
@@ -37,6 +37,17 @@ export class UsersService {
     return user;
   }
 
+  async getProjectParticipants(projectId: number) {
+    const participants = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.projectsAsParticipant', 'project')
+      .where(`projectId=${projectId}`)
+      .getMany()
+
+    return participants;
+
+  }
+
   async getCurrentUser(username: string) : Promise<FilteredUser> {
     const user = await this.userRepository.findOneBy({ username: username})
 
@@ -45,7 +56,7 @@ export class UsersService {
     return this.filterUserData(user);
   }
 
-  createUser(newUserData: CreateUserDto) : Promise<User> {
+  async createUser(newUserData: CreateUserDto) : Promise<User> {
     const newUser : User = this.userRepository.create({
       email: newUserData.email,
       name: newUserData.name,
@@ -53,15 +64,31 @@ export class UsersService {
       password: newUserData.password
     });
 
-    return this.userRepository.save(newUser);
+    try {
+      await this.userRepository.save(newUser);
+    } catch (e) {
+      const duplicatedValue : string = e.sqlMessage.match(/'\s'/gi);
+
+      console.log(duplicatedValue);
+
+      throw new HttpException(e.sqlMessage, 409);
+    }
+
+    return newUser;
   }
 
   async updateUserData(updateUserData: UpdateUserDataDto, username: string) : Promise<FilteredUser> {
     const user = await this.userRepository.findOneBy({ username: username});
 
+    if (!user) throw new NotFoundException('User not found');
+
     Object.assign(user, updateUserData);
 
-    await this.userRepository.save(user);
+    try {
+      await this.userRepository.save(user);
+    } catch (e) {
+      throw new HttpException(e.code, 409);
+    }
 
     return this.filterUserData(user);
 
@@ -83,7 +110,7 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    this.userRepository.remove(user);
+    await this.userRepository.remove(user);
 
     return `User ${username} removed`;
   }

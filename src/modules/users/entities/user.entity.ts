@@ -3,8 +3,12 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn
+  UpdateDateColumn,
+  OneToMany,
+  ManyToMany
 } from "typeorm";
+
+import { Project } from "src/modules/projects/entities";
 
 
 @Entity()
@@ -24,10 +28,16 @@ export class User {
   @Column()
   name: string;
 
-  @CreateDateColumn({name: 'created-at'})
+  @OneToMany(() => Project, (project) => project.owner, { cascade: true })
+  projects: Project[];
+
+  @ManyToMany(() => Project, (project) => project.participants)
+  projectsAsParticipant: Project[]
+
+  @CreateDateColumn({name: 'created_at'})
   createdAt: Date;
 
-  @UpdateDateColumn({name: 'updated-at'})
+  @UpdateDateColumn({name: 'updated_at'})
   updatedAt: Date;
 
 }
